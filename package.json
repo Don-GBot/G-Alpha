@@ -13,7 +13,11 @@
     "ema:scan": "node scripts/ema-breakout-scanner.js",
     "squeeze": "node scripts/squeeze-monitor.js",
     "polymarket": "node scripts/polymarket-tracker.js",
-    "reddit": "node scripts/reddit-scanner.js"
+    "reddit": "node scripts/reddit-scanner.js",
+    "multi-tf": "node scripts/multi-tf-analyzer.js",
+    "multi-tf:aligned": "node scripts/multi-tf-analyzer.js --aligned",
+    "orderbook": "node scripts/orderbook-depth.js",
+    "volume": "node scripts/volume-scanner.js"
   },
   "engines": {
     "node": ">=20.0.0"

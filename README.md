@@ -15,6 +15,9 @@ Open-source trading intelligence pipeline built on [OpenClaw](https://github.com
 - `scripts/ema-checker.js` — EMA 20/50/200 using Hyperliquid candles
 - `scripts/ema-breakout-scanner.js` — Tier 2 EMA crossover/breakout scanner
 - `scripts/squeeze-monitor.js` — Triple confluence alerts (funding + RSI + EMA)
+- `scripts/multi-tf-analyzer.js` — Multi-timeframe EMA/RSI (1h, 4h, 1d) with trend alignment
+- `scripts/orderbook-depth.js` — L2 orderbook depth, bid/ask imbalance, wall detection
+- `scripts/volume-scanner.js` — Volume spike/dry-up detection, OI/volume ratio analysis
 - `scripts/polymarket-tracker.js` — Polymarket odds monitoring
 - `scripts/reddit-scanner.js` — Reddit RSS sentiment scanner
 
@@ -43,6 +46,9 @@ npm run ema:scan         # EMA breakout scanner
 npm run squeeze          # Triple confluence alerts
 npm run polymarket       # Polymarket odds
 npm run reddit           # Reddit sentiment scan
+npm run multi-tf         # Multi-timeframe analysis (1h/4h/1d)
+npm run orderbook        # Orderbook depth + imbalance
+npm run volume           # Volume spike scanner
 ```
 
 No `npm install` needed — all scripts use Node.js built-ins only.
