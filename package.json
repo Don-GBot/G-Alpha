@@ -1,0 +1,26 @@
+{
+  "name": "g-alpha",
+  "version": "1.0.0",
+  "description": "Trading intelligence pipeline — funding rates, squeeze detection, EMA analysis",
+  "scripts": {
+    "funding": "node scripts/funding-rates.js",
+    "funding:hl": "bash scripts/hyperliquid-funding.sh",
+    "funding:all": "bash scripts/funding-unified.sh",
+    "rsi": "node scripts/rsi-checker.js",
+    "rsi:extreme": "node scripts/rsi-checker.js --extreme",
+    "ema": "node scripts/ema-checker.js",
+    "ema:funding": "node scripts/ema-checker.js --funding",
+    "ema:scan": "node scripts/ema-breakout-scanner.js",
+    "squeeze": "node scripts/squeeze-monitor.js",
+    "polymarket": "node scripts/polymarket-tracker.js",
+    "reddit": "node scripts/reddit-scanner.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Don-GBot/G-Alpha"
+  }
+}

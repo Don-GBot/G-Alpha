@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("./env");
 /**
  * EMA Checker — calculates EMA 20/50/200 using Hyperliquid candle data
  * No API key needed, no rate limits
@@ -20,8 +21,8 @@
 const fs = require('fs');
 const https = require('https');
 
-const FUNDING_PATH = '/home/ubuntu/clawd/data/funding-unified-latest.json';
-const OUTPUT_PATH = '/home/ubuntu/clawd/data/ema-latest.json';
+const FUNDING_PATH = path.resolve(__dirname, '..', 'data') + '/funding-unified-latest.json';
+const OUTPUT_PATH = path.resolve(__dirname, '..', 'data') + '/ema-latest.json';
 
 const MAJORS = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'SUI', 'LINK', 'AVAX', 'PEPE', 'WIF', 'ARB', 'OP', 'APT', 'ONDO', 'AAVE', 'HBAR', 'NEAR', 'RENDER', 'INJ', 'SEI'];
 

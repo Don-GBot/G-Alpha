@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("./env");
 /**
  * RSI Checker — calculates 14-period RSI for given coins
  * Uses CoinGecko OHLC data (free, no key)
@@ -11,8 +12,8 @@
 
 const fs = require('fs');
 
-const FUNDING_PATH = '/home/ubuntu/clawd/data/funding-rates-latest.json';
-const OUTPUT_PATH = '/home/ubuntu/clawd/data/rsi-latest.json';
+const FUNDING_PATH = path.resolve(__dirname, '..', 'data') + '/funding-rates-latest.json';
+const OUTPUT_PATH = path.resolve(__dirname, '..', 'data') + '/rsi-latest.json';
 
 // Map common perp ticker symbols to CoinGecko IDs
 const TICKER_TO_GECKO = {

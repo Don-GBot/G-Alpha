@@ -1,9 +1,8 @@
 # Setup Guide
 
 ## Prerequisites
-- Node.js 22+ or Bun 1.3+
-- OpenClaw installed and configured
-- Telegram bot token (via @BotFather)
+- Node.js 20+ (no external dependencies needed)
+- Bash (for unified funding script)
 
 ## Installation
 
@@ -14,37 +13,68 @@ cp config/example.env .env
 # Edit .env with your API keys
 ```
 
-## Running Scripts Standalone
+No `npm install` needed — all scripts use Node.js built-ins only.
+
+## Quick Start
 
 ```bash
-# Funding rates (CEX)
-node scripts/funding-rates.js
-
-# Hyperliquid funding + OI
-bash scripts/hyperliquid-funding.sh
-
-# Unified funding (CEX + HL merged)
-bash scripts/funding-unified.sh
-
-# RSI check (extreme only)
-node scripts/rsi-checker.js --extreme
-
-# EMA analysis (for funding watchlist)
-node scripts/ema-checker.js --funding
-
-# Squeeze monitor (triple confluence)
-node scripts/squeeze-monitor.js
-
-# EMA breakout scanner
-node scripts/ema-breakout-scanner.js
+# Run any script directly
+npm run funding          # CEX funding rates
+npm run funding:hl       # Hyperliquid funding + OI
+npm run funding:all      # Merged CEX + Hyperliquid
+npm run rsi:extreme      # RSI extremes only
+npm run ema:funding      # EMA for funding watchlist
+npm run ema:scan         # EMA breakout scanner
+npm run squeeze          # Triple confluence alerts
+npm run polymarket       # Polymarket odds
+npm run reddit           # Reddit sentiment scan
 ```
 
-## Wiring into OpenClaw
+## Full Pipeline (what the alert system runs)
 
-Add cron jobs in your OpenClaw config to run the alert pipeline on schedule. See the OpenClaw docs for cron configuration.
+```bash
+# Tier 1: Triple confluence (every 15min)
+npm run funding:all
+npm run rsi:extreme
+npm run ema:funding
+npm run squeeze
 
-## Data Sources
-- **Hyperliquid**: Public API, no auth, no rate limits. 228+ coins.
-- **CryptoCompare**: Free tier works. Used for RSI calculations.
-- **CEX APIs**: OKX, Bitget, Gate.io public endpoints. No auth needed for funding rates.
-- **Polymarket**: Public API for odds. Trading geo-blocked in some regions.
+# Tier 2: Breakout scanner (standalone)
+npm run ema:scan
+```
+
+Output goes to `data/` as JSON files that downstream scripts consume.
+
+## Environment Variables
+
+| Variable | Required | Used by |
+|----------|----------|---------|
+| `CRYPTOCOMPARE_API_KEY` | For RSI | rsi-checker |
+| `HELIUS_API_KEY` | Optional | (future use) |
+
+Hyperliquid, Polymarket, and CEX funding endpoints are all public — no keys needed.
+
+## How the Pipeline Works
+
+```
+funding-unified.sh
+  ├── funding-rates.js (OKX, Bitget, Gate.io)
+  └── hyperliquid-funding.sh (Hyperliquid)
+        ↓ merged JSON
+rsi-checker.js --extreme
+        ↓ RSI overlay
+ema-checker.js --funding
+        ↓ EMA overlay
+squeeze-monitor.js
+        ↓ ALERT (funding + RSI + EMA confluence)
+```
+
+Each script reads the previous script's output from `data/` and enriches it.
+
+## Automating
+
+Use cron, PM2, or [OpenClaw](https://github.com/openclaw/openclaw) to schedule the pipeline. Example cron:
+
+```bash
+*/15 * * * * cd /path/to/G-Alpha && npm run funding:all && npm run rsi:extreme && npm run ema:funding && npm run squeeze
+```

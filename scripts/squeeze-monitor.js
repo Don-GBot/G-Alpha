@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("./env");
 /**
  * Squeeze Monitor v2 — reads funding-rates-latest.json and flags squeeze candidates
  * 

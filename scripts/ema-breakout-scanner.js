@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("./env");
 /**
  * EMA Breakout Scanner — finds coins crossing EMA 200 on 1h/4h timeframes
  * Uses Hyperliquid candle data (free, no rate limits)
@@ -19,8 +20,8 @@
 const fs = require('fs');
 const https = require('https');
 
-const OUTPUT_PATH = '/home/ubuntu/clawd/data/ema-breakouts-latest.json';
-const STATE_PATH = '/home/ubuntu/clawd/data/ema-breakout-state.json';
+const OUTPUT_PATH = path.resolve(__dirname, '..', 'data') + '/ema-breakouts-latest.json';
+const STATE_PATH = path.resolve(__dirname, '..', 'data') + '/ema-breakout-state.json';
 const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4h cooldown per coin per signal
 
 function post(url, body) {
