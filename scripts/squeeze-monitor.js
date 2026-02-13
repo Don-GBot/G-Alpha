@@ -1,3 +1,4 @@
+require("./env");
 #!/usr/bin/env node
 /**
  * Squeeze Monitor v2 — reads funding-rates-latest.json and flags squeeze candidates
@@ -12,18 +13,18 @@
 const fs = require('fs');
 const path = require('path');
 
-const INPUT_FILE = path.resolve(__dirname, '..', 'data') + '//funding-rates-latest.json');
-const STATE_FILE = path.resolve(__dirname, '..', 'data') + '//squeeze-state.json');
-const OUTPUT_FILE = path.resolve(__dirname, '..', 'data') + '//squeeze-latest.json');
+const INPUT_FILE = path.join(__dirname, '../data/funding-rates-latest.json');
+const STATE_FILE = path.join(__dirname, '../data/squeeze-state.json');
+const OUTPUT_FILE = path.join(__dirname, '../data/squeeze-latest.json');
 
 const OI_THRESHOLD = 1_000_000; // $1M
 const DIVERGENCE_THRESHOLD = 0.002;
 const COOLDOWN = 4 * 60 * 60 * 1000; // 4h cooldown per coin
-const RSI_FILE = path.resolve(__dirname, '..', 'data') + '//rsi-latest.json');
-const EMA_FILE = path.resolve(__dirname, '..', 'data') + '//ema-latest.json');
-const MULTI_TF_FILE = path.resolve(__dirname, '..', 'data') + '//multi-tf-latest.json');
-const ORDERBOOK_FILE = path.resolve(__dirname, '..', 'data') + '//orderbook-depth-latest.json');
-const VOLUME_FILE = path.resolve(__dirname, '..', 'data') + '//volume-scanner-latest.json');
+const RSI_FILE = path.join(__dirname, '../data/rsi-latest.json');
+const EMA_FILE = path.join(__dirname, '../data/ema-latest.json');
+const MULTI_TF_FILE = path.join(__dirname, '../data/multi-tf-latest.json');
+const ORDERBOOK_FILE = path.join(__dirname, '../data/orderbook-depth-latest.json');
+const VOLUME_FILE = path.join(__dirname, '../data/volume-scanner-latest.json');
 
 function loadState() {
   try {

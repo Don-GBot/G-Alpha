@@ -1,5 +1,5 @@
-#!/usr/bin/env node
 require("./env");
+#!/usr/bin/env node
 /**
  * Reddit Scanner — fetches top posts from crypto subreddits via RSS
  * No auth needed. Outputs JSON for briefing integration.
@@ -20,7 +20,7 @@ const SUBREDDITS = [
   'altcoin'
 ];
 
-const OUTPUT_PATH = path.resolve(__dirname, '..', 'data') + '/reddit-digest-latest.json';
+const OUTPUT_PATH = '' + path.resolve(__dirname, '..', 'data') + '/reddit-digest-latest.json';
 
 async function fetchSubreddit(sub, period = 'day', limit = 10) {
   const url = `https://www.reddit.com/r/${sub}/top/.rss?t=${period}&limit=${limit}`;

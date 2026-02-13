@@ -1,5 +1,5 @@
-#!/usr/bin/env node
 require("./env");
+#!/usr/bin/env node
 
 const https = require('https');
 const fs = require('fs');
@@ -13,7 +13,7 @@ const MAJORS = ['BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'SUI', 'LINK', 'AVAX', 'PEPE
 const API_URL = 'https://hiveintelligence.xyz/mcp';
 
 // Create data directory if it doesn't exist
-const dataDir = path.resolve(__dirname, '..', 'data');
+const dataDir = '' + path.resolve(__dirname, '..', 'data') + '';
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }

@@ -3,7 +3,7 @@
 # Runs both sources, merges into data/funding-unified-latest.json
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DATA_DIR="$(dirname "$0")/../data"
+DATA_DIR="' + path.resolve(__dirname, '..', 'data') + '"
 
 echo "📊 Fetching Hyperliquid funding rates..."
 HL_DATA=$("$SCRIPT_DIR/hyperliquid-funding.sh" 1000000 2>/dev/null)

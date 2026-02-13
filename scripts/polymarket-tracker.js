@@ -1,5 +1,5 @@
-#!/usr/bin/env node
 require("./env");
+#!/usr/bin/env node
 /**
  * Polymarket Alert Bot — monitors markets + news for entry opportunities
  * 
@@ -17,9 +17,9 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const STATE_PATH = path.resolve(__dirname, '..', 'data') + '/polymarket-state.json';
-const ALERTS_PATH = path.resolve(__dirname, '..', 'data') + '/polymarket-alerts.json';
-const OUTPUT_PATH = path.resolve(__dirname, '..', 'data') + '/polymarket-latest.json';
+const STATE_PATH = '' + path.resolve(__dirname, '..', 'data') + '/polymarket-state.json';
+const ALERTS_PATH = '' + path.resolve(__dirname, '..', 'data') + '/polymarket-alerts.json';
+const OUTPUT_PATH = '' + path.resolve(__dirname, '..', 'data') + '/polymarket-latest.json';
 
 // Categories to track
 const TRACKED_CATEGORIES = {
