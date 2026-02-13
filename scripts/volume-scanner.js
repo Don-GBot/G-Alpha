@@ -40,7 +40,7 @@ async function main() {
     post({ type: 'metaAndAssetCtxs' }),
   ]);
 
-  const assetCtxs = ctxs[1] || [];
+  const assetCtxs = Array.isArray(ctxs) ? ctxs[1] : (ctxs.assetCtxs || []);
   const allCoins = meta.universe.map((u, i) => ({
     coin: u.name,
     dayVol: assetCtxs[i] ? parseFloat(assetCtxs[i].dayNtlVlm || '0') : 0,
@@ -108,8 +108,8 @@ async function main() {
       }
     }));
 
-    results.push(...batchResults.filter(Boolean));
-    if (i + batchSize < coins.length) await new Promise(r => setTimeout(r, 300));
+    results.push(...batchResults.filter(r => r != null));
+    if (i + batchSize < coins.length) await new Promise(r => setTimeout(r, 500));
   }
 
   // Sort by spike magnitude

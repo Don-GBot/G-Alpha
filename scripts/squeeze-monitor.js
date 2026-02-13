@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-require("./env");
 /**
  * Squeeze Monitor v2 — reads funding-rates-latest.json and flags squeeze candidates
  * 
@@ -13,15 +12,18 @@ require("./env");
 const fs = require('fs');
 const path = require('path');
 
-const INPUT_FILE = path.join(__dirname, '../data/funding-rates-latest.json');
-const STATE_FILE = path.join(__dirname, '../data/squeeze-state.json');
-const OUTPUT_FILE = path.join(__dirname, '../data/squeeze-latest.json');
+const INPUT_FILE = path.resolve(__dirname, '..', 'data') + '//funding-rates-latest.json');
+const STATE_FILE = path.resolve(__dirname, '..', 'data') + '//squeeze-state.json');
+const OUTPUT_FILE = path.resolve(__dirname, '..', 'data') + '//squeeze-latest.json');
 
 const OI_THRESHOLD = 1_000_000; // $1M
 const DIVERGENCE_THRESHOLD = 0.002;
 const COOLDOWN = 4 * 60 * 60 * 1000; // 4h cooldown per coin
-const RSI_FILE = path.join(__dirname, '../data/rsi-latest.json');
-const EMA_FILE = path.join(__dirname, '../data/ema-latest.json');
+const RSI_FILE = path.resolve(__dirname, '..', 'data') + '//rsi-latest.json');
+const EMA_FILE = path.resolve(__dirname, '..', 'data') + '//ema-latest.json');
+const MULTI_TF_FILE = path.resolve(__dirname, '..', 'data') + '//multi-tf-latest.json');
+const ORDERBOOK_FILE = path.resolve(__dirname, '..', 'data') + '//orderbook-depth-latest.json');
+const VOLUME_FILE = path.resolve(__dirname, '..', 'data') + '//volume-scanner-latest.json');
 
 function loadState() {
   try {
@@ -71,6 +73,42 @@ function main() {
     console.log(`📊 EMA data loaded for ${Object.keys(emaData).length} coins`);
   } catch {
     console.log('⚠️ No EMA data available — run ema-checker.js first');
+  }
+
+  // Load multi-timeframe data if available
+  let mtfData = {};
+  try {
+    const mtfRaw = JSON.parse(fs.readFileSync(MULTI_TF_FILE, 'utf8'));
+    for (const r of (mtfRaw.results || [])) {
+      mtfData[r.coin] = r;
+    }
+    console.log(`📊 Multi-TF data loaded for ${Object.keys(mtfData).length} coins`);
+  } catch {
+    console.log('⚠️ No multi-TF data — run multi-tf-analyzer.js first');
+  }
+
+  // Load orderbook data if available
+  let obData = {};
+  try {
+    const obRaw = JSON.parse(fs.readFileSync(ORDERBOOK_FILE, 'utf8'));
+    for (const r of (obRaw.results || [])) {
+      if (!r.error) obData[r.coin] = r;
+    }
+    console.log(`📊 Orderbook data loaded for ${Object.keys(obData).length} coins`);
+  } catch {
+    console.log('⚠️ No orderbook data — run orderbook-depth.js first');
+  }
+
+  // Load volume data if available
+  let volData = {};
+  try {
+    const volRaw = JSON.parse(fs.readFileSync(VOLUME_FILE, 'utf8'));
+    for (const r of (volRaw.results || [])) {
+      volData[r.coin] = r;
+    }
+    console.log(`📊 Volume data loaded for ${Object.keys(volData).length} coins`);
+  } catch {
+    console.log('⚠️ No volume data — run volume-scanner.js first');
   }
 
   for (const coin of coins) {
@@ -173,6 +211,56 @@ function main() {
     // Triple confluence: funding + RSI + EMA all confirm
     const tripleConfluence = rsiValid && emaConfirms;
     if (tripleConfluence) conviction = 'HIGH';
+
+    // --- NEW: Multi-timeframe alignment boost ---
+    const mtf = mtfData[coin.coin];
+    let mtfNote = '';
+    if (mtf) {
+      if (setupDirection === 'LONG' && mtf.alignment === 'BEARISH_ALIGNED') {
+        mtfNote = 'All TFs bearish — max squeeze potential if reversal triggers';
+        if (tripleConfluence) conviction = 'VERY HIGH';
+      } else if (setupDirection === 'SHORT' && mtf.alignment === 'BULLISH_ALIGNED') {
+        mtfNote = 'All TFs bullish — max squeeze potential if reversal triggers';
+        if (tripleConfluence) conviction = 'VERY HIGH';
+      } else if (mtf.rsiDivergence) {
+        mtfNote = `RSI divergence: ${mtf.rsiDivergence}`;
+      } else {
+        mtfNote = `TF alignment: ${mtf.alignment}`;
+      }
+    }
+
+    // --- NEW: Orderbook pressure ---
+    const ob = obData[coin.coin];
+    let obNote = '';
+    if (ob) {
+      if (setupDirection === 'LONG' && ob.pressure === 'buy_pressure') {
+        obNote = `Book supports long — ${ob.imbalance}x bid/ask ratio`;
+        if (conviction === 'HIGH') conviction = 'VERY HIGH';
+      } else if (setupDirection === 'SHORT' && ob.pressure === 'sell_pressure') {
+        obNote = `Book supports short — ${ob.imbalance}x ask/bid ratio`;
+        if (conviction === 'HIGH') conviction = 'VERY HIGH';
+      } else if (ob.pressure !== 'neutral') {
+        obNote = `Book ${ob.pressure} (${ob.imbalance}x) — conflicts with setup`;
+      }
+      if (ob.bidWalls || ob.askWalls) {
+        const wallCount = (ob.bidWalls?.length || 0) + (ob.askWalls?.length || 0);
+        obNote += ` | ${wallCount} wall(s) detected`;
+      }
+    }
+
+    // --- NEW: Volume context ---
+    const vol = volData[coin.coin];
+    let volNote = '';
+    if (vol) {
+      if (vol.isSpike) {
+        volNote = `Volume spike: ${vol.spike24h}x vs 24h avg`;
+      } else if (vol.isDryUp) {
+        volNote = `Volume dry-up (${vol.spike24h}x avg) — thin liquidity = sharper moves`;
+      }
+      if (vol.oiToVolRatio >= 3) {
+        volNote += (volNote ? ' | ' : '') + `High OI/Vol: ${vol.oiToVolRatio}x — crowded`;
+      }
+    }
     
     alerts.push({
       coin: coin.coin,
@@ -185,6 +273,9 @@ function main() {
       rsiNote,
       emaNote,
       emaConfirms,
+      mtfNote,
+      obNote,
+      volNote,
       tripleConfluence,
       conviction,
       reason: reasons.join('; ')
@@ -220,7 +311,10 @@ function main() {
       const rsiStr = a.rsi ? ` | RSI ${a.rsi}` : '';
       const emaStr = a.emaNote ? ` | EMA: ${a.emaNote}` : '';
       const confStr = a.tripleConfluence ? ' ⚡TRIPLE CONFLUENCE' : '';
-      console.log(`  ${a.coin} [${a.conviction}]: ${rate}% funding, ${oi} OI${rsiStr}${emaStr} — ${a.setupDirection}${confStr}${isNew}`);
+      const mtfStr = a.mtfNote ? ` | MTF: ${a.mtfNote}` : '';
+      const obStr = a.obNote ? ` | OB: ${a.obNote}` : '';
+      const volStr = a.volNote ? ` | Vol: ${a.volNote}` : '';
+      console.log(`  ${a.coin} [${a.conviction}]: ${rate}% funding, ${oi} OI${rsiStr}${emaStr}${mtfStr}${obStr}${volStr} — ${a.setupDirection}${confStr}${isNew}`);
     }
   } else {
     console.log('No squeeze candidates detected.');

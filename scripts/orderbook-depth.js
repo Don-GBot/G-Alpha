@@ -74,11 +74,11 @@ async function main() {
     coins = args.coins.split(',').map(c => c.trim().toUpperCase());
   } else {
     const ctxs = await post({ type: 'metaAndAssetCtxs' });
-    const assetCtxs = ctxs[1] || ctxs.assetCtxs || [];
+    const assetCtxs = Array.isArray(ctxs) ? ctxs[1] : (ctxs.assetCtxs || []);
     const withVolume = meta.universe.map((u, i) => ({
       coin: u.name,
       volume: assetCtxs[i] ? parseFloat(assetCtxs[i].dayNtlVlm || '0') : 0,
-    }));
+    })).filter(c => c.volume > 0);
     withVolume.sort((a, b) => b.volume - a.volume);
     coins = withVolume.slice(0, parseInt(args.top)).map(c => c.coin);
   }
@@ -142,8 +142,8 @@ async function main() {
       }
     }));
 
-    results.push(...batchResults.filter(Boolean));
-    if (i + batchSize < coins.length) await new Promise(r => setTimeout(r, 200));
+    results.push(...batchResults.filter(r => r && !r.error));
+    if (i + batchSize < coins.length) await new Promise(r => setTimeout(r, 500));
   }
 
   // Sort by imbalance strength
