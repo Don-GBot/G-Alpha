@@ -10,7 +10,8 @@ const dataDir = path.join(__dirname, '..', 'data');
 const now = Date.now();
 const MAX_STALE_MS = 24 * 60 * 60 * 1000;
 try {
-  const files = fs.readdirSync(dataDir).filter(f => f.endsWith('-latest.json'));
+  const SKIP_STALE = ['movers-latest.json']; // not wired into briefings yet
+  const files = fs.readdirSync(dataDir).filter(f => f.endsWith('-latest.json') && !SKIP_STALE.includes(f));
   for (const f of files) {
     const stat = fs.statSync(path.join(dataDir, f));
     const ageMs = now - stat.mtimeMs;
