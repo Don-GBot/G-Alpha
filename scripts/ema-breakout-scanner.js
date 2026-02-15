@@ -99,6 +99,10 @@ async function getCandles(coin, interval, count) {
 
 async function getCoinsWithOI(minOI) {
   const data = await post('https://api.hyperliquid.xyz/info', { type: 'metaAndAssetCtxs' });
+  if (!data || !Array.isArray(data) || data.length < 2) {
+    console.log('Warning: Hyperliquid API returned unexpected format');
+    return [];
+  }
   const universe = data[0].universe;
   const ctxs = data[1];
   
@@ -235,31 +239,35 @@ async function main() {
   
   console.log(`🔍 EMA Breakout Scanner — Hyperliquid (OI > $${(minOI/1e6).toFixed(1)}M)\n`);
   
-  const coins = await getCoinsWithOI(minOI);
+  let coins = await getCoinsWithOI(minOI);
+  // Cap at top 30 by OI to avoid timeouts
+  coins.sort((a, b) => b.oiUsd - a.oiUsd);
+  if (coins.length > 30) {
+    console.log(`  Capping from ${coins.length} to top 30 by OI`);
+    coins = coins.slice(0, 30);
+  }
   console.log(`📊 Scanning ${coins.length} coins...\n`);
   
   const state = loadState();
   const now = Date.now();
   const results = [];
   
-  for (let i = 0; i < coins.length; i++) {
-    const meta = coins[i];
-    try {
-      const result = await scanCoin(meta.coin, meta);
-      if (result) {
-        results.push(result);
-        for (const s of result.signals) {
-          console.log(`  ⚡ ${meta.coin}: ${s.desc} | OI $${(meta.oiUsd/1e6).toFixed(1)}M${s.rsi ? ` | RSI ${s.rsi}` : ''}`);
+  // Process in batches of 5 with concurrency
+  for (let i = 0; i < coins.length; i += 5) {
+    const batch = coins.slice(i, i + 5);
+    const batchResults = await Promise.allSettled(
+      batch.map(meta => scanCoin(meta.coin, meta).catch(() => null))
+    );
+    for (const r of batchResults) {
+      if (r.status === 'fulfilled' && r.value) {
+        results.push(r.value);
+        for (const s of r.value.signals) {
+          console.log(`  ⚡ ${r.value.coin}: ${s.desc} | OI $${(r.value.oiUsd/1e6).toFixed(1)}M${s.rsi ? ` | RSI ${s.rsi}` : ''}`);
         }
       }
-    } catch (e) {
-      // skip silently
     }
-    
-    // Rate-friendly delay
-    if (i < coins.length - 1 && i % 5 === 4) {
-      await new Promise(r => setTimeout(r, 300));
-    }
+    // Brief pause between batches
+    if (i + 5 < coins.length) await new Promise(r => setTimeout(r, 200));
   }
   
   // Filter by cooldown
