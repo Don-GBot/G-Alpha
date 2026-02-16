@@ -10,7 +10,7 @@ const dataDir = path.join(__dirname, '..', 'data');
 const now = Date.now();
 const MAX_STALE_MS = 24 * 60 * 60 * 1000;
 try {
-  const SKIP_STALE = ['movers-latest.json']; // not wired into briefings yet
+  const SKIP_STALE = ['movers-latest.json', 'correlation-breaks-latest.json', 'exchange-listings-latest.json', 'github-analysis-latest.json', 'liquidations-latest.json', 'reply-guy-latest.json']; // not wired into crons
   const files = fs.readdirSync(dataDir).filter(f => f.endsWith('-latest.json') && !SKIP_STALE.includes(f));
   for (const f of files) {
     const stat = fs.statSync(path.join(dataDir, f));
